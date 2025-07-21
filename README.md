@@ -134,7 +134,7 @@ alias keyboard='cd /root/ur5/vibecheck_ws/src/keyboard_control/keyboard_control 
 
 ### 4. Run Nodes
 
-Start your system in separate terminals or tmux panes:
+Start your system in separate terminals:
 
 ```bash
 # Terminal 1: Start micro-ROS agent (for receiver)
