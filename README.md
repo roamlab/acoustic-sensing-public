@@ -12,12 +12,10 @@
 
 
 <p align="center">
-  <a href="#key-features">Key Features</a> •
-  <a href="#how-to-use">How To Use</a> •
-  <a href="#download">Download</a> •
-  <a href="#credits">Credits</a> •
-  <a href="#related">Related</a> •
-  <a href="#license">License</a>
+  <a href="#key-features">Directory Structure</a> •
+  <a href="#how-to-use">System Overview</a> •
+  <a href="#download">Keyboard Commands</a> •
+  <a href="#credits">Getting Started</a> •
 </p>
 
 This repository contains the codebase for VibeCheck project. The system uses a UR5 robot arm equipped with a parallel gripper with piezo electric sensors used to classifiy contacts into one of three types: `diagonal_2points`, `one_line`, or `one_surface`.
