@@ -1,46 +1,77 @@
-# VibeCheck Keyboard Control
+# VibeCheck: Using Active Acoustic Tactile Sensing for Contact-Rich Manipulation
+
+<h1 align="center">
+  <br>
+  <a href="http://www.amitmerchant.com/electron-markdownify"><img src="image/logo.png" alt="Markdownify" width="200"></a>
+  <br>
+  VibeCheck
+  <br>
+</h1>
+
+<h4 align="center"> A new kind of sensor usage.</h4>
+
+
+<p align="center">
+  <a href="#key-features">Key Features</a> •
+  <a href="#how-to-use">How To Use</a> •
+  <a href="#download">Download</a> •
+  <a href="#credits">Credits</a> •
+  <a href="#related">Related</a> •
+  <a href="#license">License</a>
+</p>
 
 This repository contains the codebase for VibeCheck project. The system uses a UR5 robot arm equipped with a parallel gripper with piezo electric sensors used to classifiy contacts into one of three types: `diagonal_2points`, `one_line`, or `one_surface`.
 
 ## Directory Structure
 
 ```
-vibecheck_ws/
-├── README.md                
-├── arduino_sketch/           # Arduino sketches for Teensy
-├── build/                    
-├── classification/           # Jupyter notebooks and scripts for analyzing model performance
-│   ├── confusion_matrix.py
+VibeCheck/
+├── README.md
+├── classification/            # Jupyter notebooks and scripts for model training and evaluation
+│   ├── MLP_training.ipynb             # Training pipeline for MLP classifier
 │   ├── data_analyst_classification.ipynb
-├── full_requirements.txt     # Full list of Python packages (use for full environment recreation)
-├── install/                  
-├── log/                      
-├── model/                    # Saved models used for classification (MLP and KPCA)
-│   ├── MLP_train_demo_process_fixed_pca_parm_below_21000_02_28
+│   ├── data_analyst_classification_wilson.ipynb
+│   ├── data_analyst_regression.ipynb
+│   ├── visualize_the_rl_result.ipynb  # Visual summaries of RL performance
+│   ├── confusion_matrix.py            # Utility script to visualize classification results
+├── full_requirements.txt      # Full dependency list
+├── requirements.txt           
+├── image/
+│   └── logo.png               
+├── model/                     # Pretrained models for inference (used in keyboard interface)
 │   ├── KPCA_train_demo_process_fixed_pca_parm_below_21000_02_28
-├── nano/                     
-├── plot/                     # Signal and frequency domain visualization scripts
+│   └── MLP_train_demo_process_fixed_pca_parm_below_21000_02_28
+├── plot/                      # Signal and FFT plotting utilities
 │   ├── plot_fft.py
 │   ├── plot_raw_signal.py
 │   ├── plot_three_fft.py
-│   ├── plot_three_fft_for_one_data.py
-├── policy/                   # Trained MLP policy model(s)
-│   ├── model_try-limit-init2027.pth
-├── requirements.txt          # Minimal list of required Python dependencies
-├── src/                      # ROS 2 package source files
-│   └── keyboard_control/
-│       ├── keyboard_control/ # Python implementation of ROS 2 nodes
-│       │   ├── classifior.py      # FFT + KPCA + MLP classifier
-│       │   ├── control.py         # Main service for coordinating classification and command
-│       │   ├── data_collector.py  # Sensor data subscriber and logger
-│       │   ├── fin_control.py     # Dynamixel gripper controller
-│       │   ├── keyboard.py        # Keyboard interface for robot control
-│       │   ├── MLP_policy.py      # Policy-based control using MLP model
-│       │   ├── ur5_action.py      # UR5 motion primitives and contact-aware movements
+│   └── plot_three_fft_for_one_data.py
+├── policy/                    # Policy learning code (IL and RL) for autonomous exploration
+│   ├── MLP.py                         # MLP-based imitation learning agent
+│   ├── MLP_template.py               # Template script for MLP usage with robot interface
+│   ├── IL_collect_data.py           # Collect IL data from simulated environment
+│   ├── DQN_main.py                  # DQN-based reinforcement learning agent
+│   ├── model_try-limit-init2027.pth # Pretrained MLP policy weights
+│   ├── ENV/
+│   │   └── env.py                   # Simulated environment for learning-based agents
+│   └── model/
+│       ├── DQN.py                   # Deep Q-Network and agent implementation
+│       ├── ReplayMemory.py         # Experience replay buffer
+│       └── utils.py                # Utility functions (e.g., soft update for target network)
+├── src/
+│   └── keyboard_control/           # ROS2 Python package
+│       ├── keyboard_control/       
+│       │   ├── classifior.py       # MLP+KPCA contact classifier (FFT-based)
+│       │   ├── control.py          # Triggers classification + commands robot
+│       │   ├── data_collector.py   # Collects sensor data from micro-ROS (Teensy)
+│       │   ├── fin_control.py      # Gripper control via Dynamixel SDK
+│       │   ├── keyboard.py         # Keyboard interface to deploy policy
+│       │   ├── MLP_policy.py       # Loads and applies trained MLP policy
+│       │   └── ur5_action.py       # Low-level control of the UR5 arm (RTDE)
 │       ├── LICENSE
-│       ├── package.xml
-│       ├── setup.py, setup.cfg    
-│       ├── resource/, test/       
+│       ├── package.xml             
+│       ├── setup.py, setup.cfg     
+│       ├── resource/, test/        
 ```
 
 ## System Overview
@@ -57,19 +88,54 @@ The pipeline is composed of several key modules:
 
 You can control the robot via various key presses:
 
-| Key | Action |
-|-----|--------|
-| `d` | Move down until contact |
-| `u` | Move up |
-| `z/x/n/m` | Rotate around z or x axes (forward/backward) |
-| `i/e/j/r` | Move to predefined poses |
-| `c` | Collect sensor data and classify contact |
-| `g/o` | Close/Open gripper |
-| `s` | Heuristic autonomous exploration |
-| `p` | Auto data collection for contact type |
-| `b` | Deploy trained MLP policy |
-| `h` | Test MLP policy |
-| `/` | Run material/grasp point/internal structure data collection task |
+### Basic Motion Commands
+
+| Key  | Action                                                |
+|------|-------------------------------------------------------|
+| `d`  | Move down until contact detection                     |
+| `u`  | Move up                                               |
+| `z`  | Rotate along Z-axis (forward / positive angle)        |
+| `n`  | Rotate along Z-axis (backward / negative angle)       |
+| `x`  | Rotate along X-axis (forward / positive angle)        |
+| `m`  | Rotate along X-axis (backward / negative angle)       |
+| `,`  | Rotate along Y-axis (forward / positive angle)        |
+| `.`  | Rotate along Y-axis (backward / negative angle)       |
+| `l`  | Assign random Z-axis rotation                         |
+
+### Pose Management
+
+| Key  | Action                                                             |
+|------|--------------------------------------------------------------------|
+| `i`  | Move to default initial pose                                       |
+| `r`  | Move to a random initial pose                                      |
+| `e`  | Move to pose to collect data                           	    |
+| `j`  | Move to pose for specific tasks (e.g., material grasp/internal)    |
+
+### Pose Calculation
+
+| Key  | Action                                       |
+|------|----------------------------------------------|
+| `a`  | Compute Z pose in millimeters   	      |
+| `t`  | Compute full Euler pose `[x,y,z]` in degrees |
+
+### Sensing & Actuation
+
+| Key  | Action                                    |
+|------|-------------------------------------------|
+| `c`  | Collect sensor data and classify label    |
+| `g`  | Close the gripper                         |
+| `o`  | Open the gripper                          |
+
+### Autonomous Routines
+
+| Key  | Action                                                                          |
+|------|---------------------------------------------------------------------------------|
+| `p`  | Auto data collection routine for peg-in-hole task                               |
+| `/`  | Collect data for material properties, grasping point, and internal structure    |
+| `s`  | Run heuristic-based exploration demo with adaptive contact classification       |
+| `b`  | Deploy trained MLP policy for learned manipulation                              |
+| `h`  | Test MLP model and print prediction results                                     |
+
 
 ## Getting Started
 
