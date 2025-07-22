@@ -43,8 +43,6 @@ vibecheck_ws/
 │       ├── resource/, test/       
 ```
 
-Let me know if you'd like this merged into your README or saved to the file directly.
-
 ## System Overview
 The pipeline is composed of several key modules:
 - `keyboard.py`: The main keyboard controller, allowing manual triggering of robot movements, data collection, classification, and policy deployment.
